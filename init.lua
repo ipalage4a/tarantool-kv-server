@@ -1,4 +1,5 @@
 #!/usr/bin/env tarantool
+local json = require('json')
 
 box.cfg{listen = 3301}
 box.schema.user.passwd('pass')
@@ -18,23 +19,33 @@ end
   
 function get_handler(req)
   local key = req:stash('key')
-  local kv = box.space.kvs:select(key)
+  local kv = box.space.kvs:get(key)
   if kv == nil then 
-    return {
-      status = 404
-    }
+    return {status = 404 }
   end
-  return req:render {
-    status = 200,
-    json = kv
-  }
+
+  return { status = 200, body = json.encode({
+    key=kv.key,
+    value=kv.value
+  })}
 end
 
 function post_handler(req)
   local key = req:post_param('key')
-  local body = req:post_param('body')
-  return req:render{json = {['key'] = key, ['body']=body}}
+  local value = req:post_param('value')
+  box.space.kvs:insert({key, value})
+  return { status=201 }
 end
+
+function delete_handler(req)
+  local key = req:stash('key')
+  local deleted_kv = box.space.kvs:delete(key)
+  if deleted_kv == nil then
+    return {status = 404, json = nil }
+  end
+  return { status = 200 }
+end
+  
 
 
 local server = require('http.server').new(nil, 80)
@@ -47,7 +58,7 @@ router:route({ method='GET', path = '/debug' }, debug_handler)
 router:route({ method='GET', path = '/kv/:key' }, get_handler)
 router:route({ method='POST', path = '/kv' }, post_handler)
 router:route({ method='PUT', path = '/kv/:key' }, handler)
-router:route({ method='DELETE', path = '/kv/:key' }, handler)
+router:route({ method='DELETE', path = '/kv/:key' }, delete_handler) 
 
 server:start()
 
