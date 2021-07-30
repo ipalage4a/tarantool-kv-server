@@ -33,6 +33,11 @@ end
 function create_handler(req)
   local key = req:post_param('key')
   local value = req:post_param('value')
+
+  if key == nil then 
+    return { status = 400 }
+  end
+
   local exist = box.space.kvs:get(key)
 
   if exist ~= nil then 
@@ -76,8 +81,8 @@ function update_handler(req)
   })}
 end
   
-function main() 
-  local server = require('http.server').new(nil, 80)
+function main(port) 
+  local server = require('http.server').new(nil, port)
   local router = require('http.router').new({charset = "utf8"})
   server:set_router(router)
 
