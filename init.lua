@@ -30,11 +30,26 @@ function get_handler(req)
   })}
 end
 
-function post_handler(req)
+function create_handler(req)
   local key = req:post_param('key')
   local value = req:post_param('value')
-  box.space.kvs:insert({key, value})
-  return { status=201 }
+  local exist = box.space.kvs:get(key)
+
+  if exist ~= nil then 
+    return { status = 409 }
+  end
+
+  local ok, ret = pcall(box.space.kvs.insert, box.space.kvs,{key, value})
+
+  if not ok then
+    return { status = 500, body=ret }
+  end
+
+  return { status = 200, body = json.encode({
+    key=ret.key,
+    value=ret.value
+  })}
+
 end
 
 function delete_handler(req)
@@ -45,6 +60,21 @@ function delete_handler(req)
   end
   return { status = 200 }
 end
+
+function update_handler(req)
+  local key = req:stash('key')
+  local value = req:post_param('value')
+
+  local ok, ret = pcall(box.space.kvs.put, box.space.kvs,{key, value})
+  if not ok then
+    return { status = 500, body=ret }
+  end
+
+  return { status = 200, body = json.encode({
+    key=ret.key,
+    value=ret.value
+  })}
+end
   
 
 
@@ -53,11 +83,10 @@ local router = require('http.router').new({charset = "utf8"})
 server:set_router(router)
 
 router:route({ path = '/' }, handler)
-router:route({ method='GET', path = '/debug' }, debug_handler)
 
 router:route({ method='GET', path = '/kv/:key' }, get_handler)
-router:route({ method='POST', path = '/kv' }, post_handler)
-router:route({ method='PUT', path = '/kv/:key' }, handler)
+router:route({ method='POST', path = '/kv' }, create_handler)
+router:route({ method='PUT', path = '/kv/:key' }, update_handler)
 router:route({ method='DELETE', path = '/kv/:key' }, delete_handler) 
 
 server:start()
