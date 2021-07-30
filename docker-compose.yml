@@ -6,6 +6,7 @@ services:
       context: .
     volumes:
       - ./:/app
+      - ./data:/var/lib/tarantool:ro
   web:
     image: nginx
     volumes: 
