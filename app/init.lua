@@ -1,5 +1,6 @@
 #!/usr/bin/env tarantool
 local json = require('json')
+local log = require('log')
 
 box.cfg{listen = 3301}
 box.schema.user.passwd('pass')
@@ -34,9 +35,12 @@ function create_handler(req)
   local key = req:post_param('key')
   local value = req:post_param('value')
 
-  if key == nil then 
+  local ok, err = pcall(json.decode, value) 
+
+  if key == nil or value == nil or not ok then
     return { status = 400 }
   end
+
 
   local exist = box.space.kvs:get(key)
 
@@ -44,7 +48,7 @@ function create_handler(req)
     return { status = 409 }
   end
 
-  local ok, ret = pcall(box.space.kvs.insert, box.space.kvs,{key, value})
+  local ok, ret = pcall(box.space.kvs.insert, box.space.kvs, {key, value})
 
   if not ok then
     return { status = 500, body=ret }
@@ -61,7 +65,7 @@ function delete_handler(req)
   local key = req:stash('key')
   local deleted_kv = box.space.kvs:delete(key)
   if deleted_kv == nil then
-    return {status = 404, json = nil }
+    return {status = 404 }
   end
   return { status = 200 }
 end
@@ -69,6 +73,18 @@ end
 function update_handler(req)
   local key = req:stash('key')
   local value = req:post_param('value')
+
+  local ok, err = pcall(json.decode, value) 
+
+  if key == nil or value == nil or not ok then
+    return { status = 400 }
+  end
+
+  local exist = box.space.kvs:get(key)
+
+  if exist == nil then 
+    return { status = 404 }
+  end
 
   local ok, ret = pcall(box.space.kvs.put, box.space.kvs,{key, value})
   if not ok then
