@@ -96,5 +96,5 @@ function main(port)
   server:start()
 end
 
-main()
+main(80)
 
