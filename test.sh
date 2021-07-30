@@ -1,4 +1,4 @@
 #!/bin/bash
-docker run -it --rm \
+docker run -it \
   -v $PWD:/app \
   trntl luatest -v
