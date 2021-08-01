@@ -4,9 +4,12 @@ services:
   tarantool:
     build: 
       context: .
+    working_dir: /app/app
+    command: tarantool init.lua
+
     volumes:
       - ./:/app
-      - ./data:/var/lib/tarantool:ro
+      - ./data:/var/lib/tarantool
   web:
     image: nginx
     volumes: 

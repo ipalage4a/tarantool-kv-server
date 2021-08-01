@@ -1,2 +1,2 @@
 #!/bin/bash
-docker-compose run tarantool luatest -v;
+docker-compose run --rm -w /app tarantool luatest -v;

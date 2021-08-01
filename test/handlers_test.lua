@@ -1,15 +1,22 @@
 local t = require('luatest')
 local g = t.group()
-local app = require('app')
+local server = require('app.server')
 
 local http_client = require('http.client')
 local json = require('json')
 
+box.cfg{
+  work_dir="/tmp",
+}
+
 base_uri = 'localhost'
 port = '8080'
-kvs = box.space.kvs
+name = 'test_kvs'
 
-main(port)
+local s = server.new(name,  port)
+s:start()
+
+kvs = box.space[name]
 
 g.after_each(function()
  for k, v in kvs:pairs() do

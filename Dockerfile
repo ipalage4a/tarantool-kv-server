@@ -9,8 +9,3 @@ RUN apt-get install -y tarantool tarantool-dev
 
 RUN tarantoolctl rocks install http
 RUN tarantoolctl rocks install luatest
-
-WORKDIR /app
-
-CMD tarantool app/init.lua
-
