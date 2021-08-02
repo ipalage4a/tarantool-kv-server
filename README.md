@@ -1,7 +1,7 @@
 # tarantool-kv-server
 ### Run the server
 ```bash
-bash run.sh
+docker-compose up
 ```
 
 ### Run the tests
